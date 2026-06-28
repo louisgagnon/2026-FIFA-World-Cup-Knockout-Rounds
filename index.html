@@ -93,8 +93,9 @@
     .modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
     .modal-team-logo{width:44px;height:44px;object-fit:contain;border-radius:6px}
     .modal-team-flag{font-size:2rem;flex-shrink:0}
-    .modal-team-name{flex:1;font-size:1.1rem;font-weight:700}
-    .modal-close{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:1.4rem;line-height:1;padding:4px 8px;border-radius:6px}
+    .modal-team-name{font-size:1.1rem;font-weight:700}
+    .modal-team-stats{font-size:.72rem;color:var(--text2);margin-top:3px}
+    .modal-close{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:1.4rem;line-height:1;padding:4px 8px;border-radius:6px;flex-shrink:0}
     .modal-close:hover{background:var(--card);color:var(--text)}
     .modal-body{padding:16px 22px;overflow-y:auto;flex:1}
     .pos-group{margin-bottom:18px}
@@ -103,6 +104,7 @@
     .player-row:last-child{border-bottom:none}
     .p-num{width:22px;text-align:center;color:var(--text3);font-size:.72rem;font-weight:700}
     .p-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--card);flex-shrink:0}
+    .p-photo-ph{width:28px;height:28px;border-radius:50%;background:var(--card);border:1px solid var(--border);flex-shrink:0}
     .p-name{flex:1;font-weight:500}
     .p-age{color:var(--text3);font-size:.72rem;min-width:24px;text-align:right}
     .p-club{color:var(--text2);font-size:.72rem;text-align:right;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -136,7 +138,10 @@
     <div class="modal-head">
       <span class="modal-team-flag" id="mFlag"></span>
       <img class="modal-team-logo" id="mLogo" src="" alt="" onerror="this.style.display='none'">
-      <div class="modal-team-name" id="mName">Roster</div>
+      <div style="flex:1;min-width:0">
+        <div class="modal-team-name" id="mName">Roster</div>
+        <div class="modal-team-stats" id="mStats"></div>
+      </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="mBody"><div class="state-box" style="padding:40px"><div class="spinner"></div></div></div>
@@ -150,6 +155,43 @@ const KO_FROM='20260628',KO_TO='20260721';
 const ROUND_ORDER=['Round of 32','Round of 16','Quarterfinals','Semifinals','Third Place','Final'];
 const ROUND_KEYS={'round of 32':'Round of 32','round of 16':'Round of 16','quarterfinal':'Quarterfinals','quarterfinals':'Quarterfinals','semifinal':'Semifinals','semifinals':'Semifinals','third':'Third Place','3rd':'Third Place','final':'Final'};
 const FLAGS={'United States':'🇺🇸','USA':'🇺🇸','Mexico':'🇲🇽','Canada':'🇨🇦','Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪','Spain':'🇪🇸','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Portugal':'🇵🇹','Netherlands':'🇳🇱','Belgium':'🇧🇪','Japan':'🇯🇵','South Korea':'🇰🇷','Australia':'🇦🇺','Morocco':'🇲🇦','Senegal':'🇸🇳','Nigeria':'🇳🇬','Ghana':'🇬🇭','Egypt':'🇪🇬','Tunisia':'🇹🇳','Algeria':'🇩🇿','Cameroon':'🇨🇲',"Côte d'Ivoire":'🇨🇮','Ivory Coast':'🇨🇮','Mali':'🇲🇱','Saudi Arabia':'🇸🇦','Iran':'🇮🇷','Qatar':'🇶🇦','Iraq':'🇮🇶','Poland':'🇵🇱','Croatia':'🇭🇷','Denmark':'🇩🇰','Switzerland':'🇨🇭','Serbia':'🇷🇸','Ukraine':'🇺🇦','Turkey':'🇹🇷','Austria':'🇦🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Italy':'🇮🇹','Romania':'🇷🇴','Czech Republic':'🇨🇿','Slovakia':'🇸🇰','Slovenia':'🇸🇮','Uruguay':'🇺🇾','Colombia':'🇨🇴','Ecuador':'🇪🇨','Chile':'🇨🇱','Peru':'🇵🇪','Paraguay':'🇵🇾','Venezuela':'🇻🇪','Bolivia':'🇧🇴','Costa Rica':'🇨🇷','Panama':'🇵🇦','Honduras':'🇭🇳','Jamaica':'🇯🇲','El Salvador':'🇸🇻','Guatemala':'🇬🇹','Trinidad and Tobago':'🇹🇹','China':'🇨🇳','China PR':'🇨🇳','Indonesia':'🇮🇩','New Zealand':'🇳🇿','South Africa':'🇿🇦','Tanzania':'🇹🇿','Zambia':'🇿🇲','Kenya':'🇰🇪'};
+const COUNTRY_STATS={
+  'United States':{pop:335,gdp:80300},'USA':{pop:335,gdp:80300},
+  'Mexico':{pop:130,gdp:11000},'Canada':{pop:40,gdp:53200},
+  'Brazil':{pop:215,gdp:10900},'Argentina':{pop:46,gdp:13700},
+  'France':{pop:68,gdp:44400},'Germany':{pop:84,gdp:54300},
+  'Spain':{pop:48,gdp:35900},'England':{pop:57,gdp:46200},
+  'Portugal':{pop:10.3,gdp:27500},'Netherlands':{pop:17.9,gdp:63800},
+  'Belgium':{pop:11.6,gdp:50000},'Japan':{pop:124,gdp:34000},
+  'South Korea':{pop:51.7,gdp:35000},'Australia':{pop:26.5,gdp:65000},
+  'Morocco':{pop:37,gdp:4000},'Senegal':{pop:18,gdp:1700},
+  'Nigeria':{pop:220,gdp:2200},'Ghana':{pop:33,gdp:2400},
+  'Egypt':{pop:106,gdp:4200},'Tunisia':{pop:12,gdp:3900},
+  'Algeria':{pop:45.6,gdp:5000},'Cameroon':{pop:27,gdp:1700},
+  "Côte d'Ivoire":{pop:27,gdp:2700},'Ivory Coast':{pop:27,gdp:2700},
+  'Mali':{pop:23,gdp:900},'Saudi Arabia':{pop:36,gdp:32800},
+  'Iran':{pop:87,gdp:5700},'Qatar':{pop:3,gdp:87900},
+  'Iraq':{pop:42,gdp:5100},'Poland':{pop:38,gdp:21000},
+  'Croatia':{pop:4,gdp:22000},'Denmark':{pop:5.9,gdp:67000},
+  'Switzerland':{pop:8.7,gdp:90000},'Serbia':{pop:7,gdp:10000},
+  'Ukraine':{pop:44,gdp:5200},'Turkey':{pop:84,gdp:13000},
+  'Austria':{pop:9,gdp:54000},'Scotland':{pop:5.5,gdp:40000},
+  'Wales':{pop:3.1,gdp:35000},'Italy':{pop:60,gdp:38000},
+  'Romania':{pop:19,gdp:18000},'Czech Republic':{pop:10.8,gdp:30000},
+  'Slovakia':{pop:5.5,gdp:24000},'Slovenia':{pop:2.1,gdp:35000},
+  'Uruguay':{pop:3.5,gdp:21000},'Colombia':{pop:51,gdp:7400},
+  'Ecuador':{pop:18,gdp:6500},'Chile':{pop:19,gdp:16000},
+  'Peru':{pop:33,gdp:7200},'Paraguay':{pop:7.4,gdp:6000},
+  'Venezuela':{pop:30,gdp:4000},'Bolivia':{pop:12,gdp:3600},
+  'Costa Rica':{pop:5.2,gdp:14000},'Panama':{pop:4.4,gdp:16000},
+  'Honduras':{pop:10.3,gdp:3000},'Jamaica':{pop:2.8,gdp:6000},
+  'El Salvador':{pop:6.3,gdp:5000},'Guatemala':{pop:17,gdp:5000},
+  'Trinidad and Tobago':{pop:1.5,gdp:17000},
+  'China':{pop:1412,gdp:13700},'China PR':{pop:1412,gdp:13700},
+  'Indonesia':{pop:278,gdp:5000},'New Zealand':{pop:5.1,gdp:48000},
+  'South Africa':{pop:60,gdp:6500},'Uzbekistan':{pop:36,gdp:2400},
+  'Jordan':{pop:10.2,gdp:5500}
+};
 let events=[],roundMap={},activeRound=null,view='cards',refreshTmr=null,hasLive=false,activeSlug=SLUGS[0];
 const h=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const flag=name=>FLAGS[name]??'';
@@ -158,7 +200,7 @@ const realTeam=c=>{
   if(!id||String(id)==='0')return false;
   const nm=(c?.team?.displayName||c?.team?.name||'').trim();
   if(!nm||nm.toLowerCase()==='tbd')return false;
-  if(/winner|loser/i.test(nm))return false; // ESPN bracket placeholder e.g. "Round of 32 3 Winner"
+  if(/winner|loser/i.test(nm))return false;
   return true;
 };
 function fmtDate(iso){try{const d=new Date(iso);return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}catch{return ''}}
@@ -250,7 +292,7 @@ function teamRow(team,other,showScore,isPre){
   const name=team.team?.displayName??'TBD',tid=team.team?.id??'',logo=team.team?.logo??'',abbr=team.team?.abbreviation??'?';
   const score=showScore?(team.score??'–'):'–',won=team.winner===true,lost=other.winner===true,emoji=flag(name),isTbd=!tid;
   const nameClass=isTbd?'tbd':won?'won':'',scoreClass=isPre?'dash':won?'won':lost?'lost':'';
-  const da=tid?`data-tid="${h(tid)}" data-tname="${h(name)}" data-tlogo="${h(logo)}"`:'`';
+  const da=tid?`data-tid="${h(tid)}" data-tname="${h(name)}" data-tlogo="${h(logo)}"`:'';
   return `<div class="team-row">${emoji?`<span class="team-flag">${emoji}</span>`:logo?`<img class="team-logo" src="${h(logo)}" alt="" onerror="this.style.display='none'">`:`<div class="team-logo-ph">${h(abbr)}</div>`}<span class="team-name ${nameClass}" ${da}>${h(isTbd?'TBD':name)}</span><span class="team-score ${scoreClass}">${showScore?score:'–'}</span></div>`;
 }
 function renderBracket(){
@@ -268,15 +310,22 @@ function bMatch(ev){
 }
 function bTeam(team,won,show){
   const name=team.team?.displayName??'TBD',tid=team.team?.id??'',logo=team.team?.logo??'',score=show?(team.score??''):'',emoji=flag(name),isTbd=!tid;
-  const da=tid?`data-tid="${h(tid)}" data-tname="${h(name)}" data-tlogo="${h(logo)}"`:'`';
-  return `<div class="b-team">${emoji?`<span class="b-flag">${emoji}</span>`:logo?`<img class="b-logo" src="${h(logo)}" alt="" onerror="this.style.display='none'">`:'`'}<span class="b-name ${isTbd?'tbd':won?'won':''}" ${da}>${h(isTbd?'TBD':name)}</span><span class="b-score ${won?'won':''}">${h(score)}</span></div>`;
+  const da=tid?`data-tid="${h(tid)}" data-tname="${h(name)}" data-tlogo="${h(logo)}"`:'';
+  return `<div class="b-team">${emoji?`<span class="b-flag">${emoji}</span>`:logo?`<img class="b-logo" src="${h(logo)}" alt="" onerror="this.style.display='none'">`:''}<span class="b-name ${isTbd?'tbd':won?'won':''}" ${da}>${h(isTbd?'TBD':name)}</span><span class="b-score ${won?'won':''}">${h(score)}</span></div>`;
 }
 function getTeams(comp){const home=comp.competitors?.find(c=>c.homeAway==='home')??comp.competitors?.[0];const away=comp.competitors?.find(c=>c.homeAway==='away')??comp.competitors?.[1];return[home,away]}
+function fmtCountryStats(name){
+  const s=COUNTRY_STATS[name];if(!s)return '';
+  const pop=s.pop<10?s.pop.toFixed(1)+'M':Math.round(s.pop)+'M';
+  const gdp='$'+s.gdp.toLocaleString('en-US');
+  return `Pop. ${pop} · GDP/cap ${gdp}`;
+}
 async function openRoster(tid,name,logo){
   if(!tid)return;
   document.getElementById('rosterModal').classList.remove('hidden');
   document.getElementById('mName').textContent=name;
   document.getElementById('mFlag').textContent=flag(name);
+  document.getElementById('mStats').textContent=fmtCountryStats(name);
   const mLogo=document.getElementById('mLogo');if(logo){mLogo.src=logo;mLogo.style.display=''}else mLogo.style.display='none';
   document.getElementById('mBody').innerHTML='<div class="state-box" style="padding:40px"><div class="spinner"></div></div>';
   try{const data=await fetchJSON(`${API}/${activeSlug}/teams/${tid}/roster`);renderRoster(data.athletes??[])}
@@ -289,8 +338,7 @@ function renderRoster(athletes){
   if(!athletes.length){document.getElementById('mBody').innerHTML='<div class="state-box" style="padding:40px"><p>No roster data found for this team.</p></div>';return}
   const groups={};for(const p of athletes){const g=posGroup(p.position);(groups[g]??=[]).push(p)}
   const order=[...POS_ORDER,'Other'].filter(g=>groups[g]?.length);
-  document.getElementById('mBody').innerHTML=order.map(g=>`<div class="pos-group"><div class="pos-label">${h(g)}s</div>${groups[g].map(p=>{const name=p.displayName??p.fullName??p.lastName??'',num=p.jersey??'–',age=p.age??'',club=p.team?.displayName??p.team?.shortDisplayName??'',photo=p.headshot?.href??'';return `<div class="player-row"><span class="p-num">${h(num)}</span>${photo?`<img class="p-photo" src="${h(photo)}" alt="" onerror="this.style.display='none'">`:'`'}<span class="p-name">${h(name)}</span>${age?`<span class="p-age">${h(age)}y</span>`:''}
-  ${club?`<span class="p-club">${h(club)}</span>`:''}</div>`}).join('')}</div>`).join('');
+  document.getElementById('mBody').innerHTML=order.map(g=>`<div class="pos-group"><div class="pos-label">${h(g)}s</div>${groups[g].map(p=>{const name=p.displayName??p.fullName??p.lastName??'',num=p.jersey??'–',age=p.age??'',club=p.team?.displayName??p.team?.shortDisplayName??'',photo=p.headshot?.href??'';return `<div class="player-row"><span class="p-num">${h(num)}</span>${photo?`<img class="p-photo" src="${h(photo)}" alt="" onerror="this.style.display='none'">`:`<div class="p-photo-ph"></div>`}<span class="p-name">${h(name)}</span>${age?`<span class="p-age">${h(age)}y</span>`:''}${club?`<span class="p-club">${h(club)}</span>`:''}</div>`}).join('')}</div>`).join('');
 }
 function closeModal(){document.getElementById('rosterModal').classList.add('hidden')}
 function maybeCloseModal(e){if(e.target.id==='rosterModal')closeModal()}
