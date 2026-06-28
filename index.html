@@ -155,15 +155,22 @@ const flag=name=>FLAGS[name]??'';
 function fmtDate(iso){try{const d=new Date(iso);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}catch{return ''}}
 function detectRound(ev){
   const comp=ev.competitions?.[0];
-  if(comp?.notes?.length){for(const n of comp.notes){const txt=(n.headline||n.text||'').toLowerCase();if(txt.includes('group'))return 'Other';for(const[k,v]of Object.entries(ROUND_KEYS))if(txt.includes(k))return v}}
+  // Exclude group stage
+  if(comp?.notes?.length){for(const n of comp.notes){const txt=(n.headline||n.text||'').toLowerCase();if(txt.includes('group'))return 'Other'}}
   const name=(ev.name||ev.shortName||'').toLowerCase();
   if(name.includes('group'))return 'Other';
-  for(const[k,v]of Object.entries(ROUND_KEYS))if(name.includes(k))return v;
+  // Date-based detection is primary — ESPN's round labels are inconsistent
   const d=new Date(ev.date),m=d.getMonth()+1,day=d.getDate();
-  if(m===6&&day>=28)return 'Round of 32';if(m===7&&day<=2)return 'Round of 32';
-  if(m===7&&day<=6)return 'Round of 16';if(m===7&&day<=12)return 'Quarterfinals';
-  if(m===7&&day<=16)return 'Semifinals';if(m===7&&day===18)return 'Third Place';
-  if(m===7&&day>=19)return 'Final';return 'Other';
+  if((m===6&&day>=28)||(m===7&&day<=4))return 'Round of 32';
+  if(m===7&&day<=9)return 'Round of 16';
+  if(m===7&&day<=13)return 'Quarterfinals';
+  if(m===7&&day<=16)return 'Semifinals';
+  if(m===7&&day<=18)return 'Third Place';
+  if(m===7&&day>=19)return 'Final';
+  // ESPN label fallback for anything outside the date window
+  if(comp?.notes?.length){for(const n of comp.notes){const txt=(n.headline||n.text||'').toLowerCase();for(const[k,v]of Object.entries(ROUND_KEYS))if(txt.includes(k))return v}}
+  for(const[k,v]of Object.entries(ROUND_KEYS))if(name.includes(k))return v;
+  return 'Other';
 }
 async function fetchJSON(url){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
 async function loadEvents(){
@@ -173,7 +180,14 @@ async function loadEvents(){
 }
 function process(evts){
   roundMap={};hasLive=false;
-  for(const ev of evts){const round=detectRound(ev);(roundMap[round]??=[]).push(ev);if(ev.competitions?.[0]?.status?.type?.state==='in')hasLive=true}
+  for(const ev of evts){
+    const comp=ev.competitions?.[0];if(!comp)continue;
+    const[t1,t2]=getTeams(comp);
+    if(!t1?.team?.id&&!t2?.team?.id)continue; // skip placeholder TBD matches
+    const round=detectRound(ev);
+    (roundMap[round]??=[]).push(ev);
+    if(comp.status?.type?.state==='in')hasLive=true;
+  }
   for(const r of Object.keys(roundMap))roundMap[r].sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(!activeRound||!roundMap[activeRound])activeRound=bestRound();
   document.getElementById('livePill').style.display=hasLive?'':'none';
