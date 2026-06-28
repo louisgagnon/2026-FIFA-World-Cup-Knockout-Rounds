@@ -183,7 +183,7 @@ function process(evts){
   for(const ev of evts){
     const comp=ev.competitions?.[0];if(!comp)continue;
     const[t1,t2]=getTeams(comp);
-    if(!t1?.team?.id&&!t2?.team?.id)continue; // skip placeholder TBD matches
+    if(!t1?.team?.id||!t2?.team?.id)continue; // skip any match where either team is TBD
     const round=detectRound(ev);
     (roundMap[round]??=[]).push(ev);
     if(comp.status?.type?.state==='in')hasLive=true;
